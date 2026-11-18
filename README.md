@@ -1,72 +1,49 @@
-# Leaf · 英语学习空间
+# Leaf · 个人英语学习空间
 
-Leaf 将视频精听、字幕精读、词汇积累和口语练习整合在同一平台，围绕“观看、理解、收藏、复习、表达”构建学习流程。
+Leaf 将视频学习、字幕精读、听音填空、单词本复习与学习统计整合到一个英语学习网站中。
 
 ## 功能
 
-- 视频资料库：本地视频、视频网址和 SRT / VTT 字幕导入；任务阶段显示；回收站恢复。
-- 字幕精读：中英双语、单英语、单中文及隐藏模式；字幕字号调整、重点表达标黄、逐词查词收藏。
-- 单词本：多词册、Excel / CSV 导入、AI 补全缺失资料、每日计划、乱序听写、错词重练。
-- 练习快捷键：Ctrl+A 重听，Ctrl+Q 查看或隐藏拼写，Enter 提交，Esc 退出。
-- 口语：录音回放、文字模型生成连读建议；可选 Azure Speech 音频评分及逐词、音素反馈。
+- 视频导入、封面更换与合集分类。
+- 双语字幕、重点词汇标黄、逐句播放与字幕跟随。
+- 视频字幕内打字练习：句末暂停、空格切换单词、Enter 验证；答对继续下一句，答错显示正确拼写并重播后重填。
+- 单词本、每日分组训练、拼写与错题练习。
+- 学习概览、统计与打卡。
+- 可连接自托管转写和语言模型服务；真实语音评分需另行配置语音评分服务。
 
-## 技术与目录
+## 源码目录
 
-前端采用 React、TypeScript、Vinext / Vite；后端采用 Python FastAPI、SQLite、FFmpeg、faster-whisper 和 yt-dlp，通过 Docker Compose 部署。
+- `app/`、`components/`、`hooks/`、`lib/`：网站前端与页面接口。
+- `selfhost/`：Python API、Docker 配置和环境变量模板。
+- `extensions/leaf-sync/`：B站内嵌播放器同步扩展源码。
+- `tests/`：自动化测试。
+- `public/`：静态资源及后端、扩展分发包。
 
-| 目录 | 内容 |
-| --- | --- |
-| `app/`、`components/`、`lib/` | 学习界面与业务逻辑 |
-| `selfhost/` | 自托管 API、Docker 配置和 Windows 更新脚本 |
-| `selfhost/tests/` | 后端接口及任务状态测试 |
-| `scripts/`、`worker/` | 前端构建与 Cloudflare Worker 支持 |
-| `public/leaf_backend_v4.zip` | Windows 后端更新包 |
+## 本地开发
 
-## 前端启动
+需要 Node.js >= 22.13.0。在项目根目录执行：
 
-需要 Node.js 22.13.0 或以上版本。
-
-```bash
-npm ci
+```powershell
+npm run install:ci
 npm run dev
 ```
 
-打开终端实际显示的本地地址。构建使用 `npm run build`。本项目不是纯静态 GitHub Pages 项目；上传代码不会自动部署网站。原 Sites 托管配置保留在 `.openai/hosting.json`，迁移到其他部署环境时需调整相应配置。模板基础设施说明见 [docs/STARTER.md](docs/STARTER.md)。
+打开终端输出的本地地址。构建命令：`npm run build`。
 
-## 后端启动
+后端的安装和配置见 [selfhost/README.md](selfhost/README.md)。请从 `.env.example` 创建本机 `.env` 后填写自己的配置，不要提交实际密钥。
 
-进入 `selfhost`，复制 `.env.example` 为 `.env`，填写配置，再启动服务：
+## 上传与部署说明
 
-```bash
-cd selfhost
-cp .env.example .env
-# Windows PowerShell 可使用 Copy-Item .env.example .env
-# 编辑 .env 后执行：
-docker compose up --build -d
-```
+参见 [GITHUB_UPLOAD.md](GITHUB_UPLOAD.md)。本项目是 Vinext / React / Cloudflare Worker 工程；上传源码到 GitHub 不会自动发布或替换当前网站，也不是可直接通过 GitHub Pages 托管的纯静态页面。
 
-- `LEAF_API_KEY`：自定义至少 20 字符的随机访问密钥，用于网页连接后端。
-- `ALLOWED_ORIGINS`：填写实际网页来源地址，包括本地开发地址。
-- `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY`：可选兼容接口，负责翻译、词汇资料及文字练习建议。
-- `AZURE_SPEECH_KEY`、`AZURE_SPEECH_ENDPOINT`：可选，启用真实音频发音评分。
+更换网站域名后，需要同步检查后端 `ALLOWED_ORIGINS`，以及扩展中的站点匹配范围；扩展目前绑定原 Leaf 网站。
 
-后端默认监听本机 `127.0.0.1:8000`。在线网页连接后端需配置可访问的 HTTPS 服务地址，并在网页“学习设置”填写地址和 `LEAF_API_KEY`。模型服务密钥只配置在后端。
+学习数据保存在使用者浏览器的 localStorage / IndexedDB 中。本包不包含个人单词、练习记录、导入的视频、后端运行数据和 API 密钥。
 
-详细说明见 [selfhost/README.md](selfhost/README.md)，现有 Windows 项目升级见 [selfhost/UPDATE-v4.txt](selfhost/UPDATE-v4.txt)。
+## 版本
 
-## 数据与限制
+打包日期：2026-11-18。基础源码提交：`32decb1d31c737e991a0bec4af5c15840ad30d0b`。
 
-学习记录保存在当前浏览器 localStorage，视频缓存使用 IndexedDB；后端任务及媒体保存在 Docker 数据卷。没有自动跨设备同步。请通过网页备份学习记录，另行备份视频和后端数据卷。
+本包保留项目源码和锁文件，排除依赖、构建结果、Git 历史、运行缓存和内部测试截图；本说明为分发包新增。
 
-Azure Speech 未配置时不能对真实录音评分，文字模型建议不等同于录音检测。Bilibili 原址嵌入不回传播放时间，需手动选句；平台限制可能阻止下载或嵌入。本地大视频仍可能通过配置的公网隧道上传，导入性能有进一步优化空间。
-
-不要提交真实 `.env`、密钥、录音、个人学习记录或视频原文件。本仓库仅包含配置示例。
-
-## 验证
-
-```bash
-npx tsc --noEmit
-python -m unittest discover -s selfhost/tests
-```
-
-Python 测试需要安装后端依赖。v4 开发阶段已通过类型检查、生产构建和 19 项后端测试；外部服务测试使用模拟响应，不能代替实际部署环境的端到端验证。
+原工程的技术说明见 [docs/FRAMEWORK_README.md](docs/FRAMEWORK_README.md)。
